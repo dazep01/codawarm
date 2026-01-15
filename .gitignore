@@ -1,0 +1,19 @@
+# --- OS Trash ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- API & Secrets ---
+.env
+config.js
+apiKey.txt
+
+# --- Logs ---
+*.log
+npm-debug.log*
