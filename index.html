@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CodaWarm AI Pro - Powered by Gemini 1.5 Flash</title>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+  
+</head>
+<body>
+<body>
+
+  <!-- Left Navigation -->
+  <div class="left-nav">
+    <button class="nav-icon" id="pinned-toggle"
+      onclick="openSheet('pinned-sheet')" title="Chat yang Disematkan">
+      <i class="ph ph-push-pin"></i>
+      <span class="badge pinned-badge" id="pinned-count">0</span>
+    </button>
+
+    <button class="nav-icon" id="prompt-toggle"
+      onclick="openSheet('prompt-sheet')" title="Bank Prompt">
+      <i class="ph ph-magic-wand"></i>
+    </button>
+
+    <button class="nav-icon" id="info-toggle" onclick="openInfoModal()"
+      title="Info &amp; Privasi">
+      <i class="ph ph-info"></i>
+    </button>
+  </div>
+  <!-- Header -->
+  <header>
+    <div class="logo-container">
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"
+          width="200" height="200" fill="none" stroke-linecap="round"
+          stroke-linejoin="round">
+          <defs>
+            <radialGradient id="a" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".3"></stop>
+              <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"></stop>
+            </radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="90" fill="url(#a)"></circle>
+          <rect x="40" y="50" width="120" height="100" rx="20" stroke="#FFFFFF"
+            stroke-width="10"></rect>
+          <circle cx="80" cy="75" r="6" fill="#FFFFFF"></circle>
+          <circle cx="100" cy="75" r="6" fill="#FFFFFF"></circle>
+          <circle cx="120" cy="75" r="6" fill="#FFFFFF"></circle>
+          <path d="m65 105-10 10 10 10m70-20 10 10-10 10" stroke="#FFFFFF"
+            stroke-width="8"></path>
+          <path
+            d="M98 99.28c.805-2.04 3.695-2.04 4.5 0l2.275 5.775a14.5 14.5 0 0 0 8.17 8.17l5.775 2.275c2.04.805 2.04 3.695 0 4.5l-5.775 2.275a14.5 14.5 0 0 0-8.17 8.17l-2.275 5.774c-.805 2.04-3.695 2.04-4.5 0l-2.275-5.775a14.5 14.5 0 0 0-8.17-8.17L81.78 120c-2.04-.805-2.04-3.695 0-4.5l5.775-2.275a14.5 14.5 0 0 0 8.17-8.17z"
+            fill="#aadfff" stroke="#aadfff" stroke-width="1.5"></path>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <h1>CodaWarm <span>AI Pro</span></h1>
+        <p style="padding: 0; margin: 0; color: #3c5178; font-size: 0.25rem;">
+          <i>Powered by Gemini AI</i></p>
+      </div>
+    </div>
+
+    <i class="ph ph-user-circle user-icon"
+      onclick="openSheet('settings-sheet')"></i>
+  </header>
+
+  <!-- Chat Container -->
+  <div id="chat-container"></div>
+
+  <!-- File Preview -->
+  <div id="file-preview">
+    <div class="file-info">
+      <i class="ph ph-file-text"></i>
+      <span id="file-name"></span>
+    </div>
+    <button class="file-clear-btn" onclick="clearFile()">
+      <i class="ph ph-x-circle"></i>
+    </button>
+  </div>
+
+    <!-- Input Area -->
+    <div class="input-box">
+        <div class="role-selector-container">
+            <div class="intro-role">
+                <i class="ph ph-briefcase" style="font-size: 20px; color: var(--accent-primary);"></i>
+                <h4>Pilih Role & Persona AI CodOt</h4>
+            </div>
+            <div class="wadah-pilihan">
+                <select id="roleSelect" class="role-dropdown">
+                    <option value="Senior Coding Assistant">Senior Coding Assistant</option>
+                    <option value="Cyber Security Expert">Cyber Security Expert</option>
+                    <option value="UI/UX Designer">UI/UX Designer</option>
+                    <option value="Technical Writer">Technical Writer</option>
+                    <option value="Database Architect">Database Architect</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="wadah-input">
+    <button class="icon-btn"
+      onclick="document.getElementById('fileInput').click()"
+      title="Lampirkan file">
+      <i class="ph ph-paperclip"></i>
+    </button>
+    <button class="icon-btn" onclick="openExpandedInput()"
+      title="Input panjang">
+      <i class="ph ph-arrows-out-simple"></i>
+    </button>
+    <input type="file" id="fileInput" style="display:none"
+      onchange="handleFile(this)">
+    <input type="text" id="userInput"
+      placeholder="Tulis pesan atau ketik / untuk prompt..." autocomplete="off">
+    <div class="loader" id="loader"></div>
+    <button class="btn-action" id="sendBtn" onclick="sendMessage()">
+      <i class="ph-fill ph-paper-plane-right"></i>
+    </button>
+        </div>
+    </div>
+
+  <!-- Overlay -->
+  <div class="overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+  <!-- Settings Sheet -->
+  <div id="settings-sheet" class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="mt-0">Pengaturan</h3>
+
+    <label class="sheet-label">GEMINI API KEY</label>
+    <input type="password" id="apiKeyInput" class="sheet-input"
+      placeholder="Masukkan API Key Anda">
+
+    <button class="btn-action save-btn" onclick="saveConfig()">
+      <i class="ph ph-check-circle"></i>
+      Simpan Pengaturan
+    </button>
+
+    <button class="btn-action danger-btn" onclick="resetSession()">
+      <i class="ph ph-trash"></i>
+      Reset Sesi Chat
+    </button>
+
+    <button class="btn-action secondary-btn" onclick="closeAllSheets()">
+      <i class="ph ph-x"></i>
+      Tutup
+    </button>
+  </div>
+
+  <!-- Expanded Input Sheet -->
+  <div id="input-sheet" class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="mt-0">Input Panjang / Kode</h3>
+    <p><i>awali dengan ``` untuk menulis kode!</i></p>
+    
+<!-- Perbaiki style inline menjadi: -->
+<div id="input-helper-container" style="display:none; margin-bottom: var(--space-3);">
+    <div class="helper-header">
+        <span><i class="ph ph-code"></i> Code Preview</span>
+        <button onclick="toggleHelper()">×</button>
+    </div>
+    <div id="inputPreview" class="preview-box"></div>
+</div>
+
+
+    <textarea id="expandedInput"
+      placeholder="Tempel kode atau tulis penjelasan panjang di sini..."></textarea>
+
+    <button class="btn-action save-btn" onclick="sendFromExpanded()">
+      <i class="ph ph-paper-plane-right"></i>
+      Kirim Sekarang
+    </button>
+
+    <button class="btn-action secondary-btn" onclick="closeAllSheets()">
+      <i class="ph ph-x"></i>
+      Batal
+    </button>
+  </div>
+
+  <!-- Pinned Chats Sheet -->
+  <div id="pinned-sheet" class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="mt-0">💬 Chat yang Disematkan</h3>
+    <p
+      style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: var(--space-lg);">
+      Klik pada card untuk langsung menuju ke chat tersebut
+    </p>
+
+    <div id="pinned-list">
+      <!-- Pinned chats will appear here -->
+    </div>
+
+    <div class="text-center"
+      style="color: var(--text-tertiary); font-size: 0.85rem; padding: var(--space-xl) 0;">
+      <i class="ph ph-push-pin"></i>
+      <span>Tidak ada chat yang disematkan</span>
+    </div>
+
+    <button class="btn-action secondary-btn" onclick="closeAllSheets()">
+      <i class="ph ph-x"></i>
+      Tutup
+    </button>
+  </div>
+
+<div id="prompt-sheet" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="wadah" style="display: flex; flex-direction: column; margin: 0; padding: 0; height: 400px;">
+    <div class="judul-sheet-prompt" style="display: flex; flex-direction: column; margin: 0; padding: var(--space-md); position: sticky; top: 0; background: var(--bg); z-index: 10;">
+      <h3 class="mt-0">✨ Bank Prompt</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: var(--space-lg);">
+        Klik pada judul atau konten untuk edit inline. Prompt dapat digunakan
+        dengan mengetik / di input
+      </p>
+    </div>
+
+    <div id="prompt-list" style="overflow-y: auto; flex: 1; padding-right: 8px;">
+      <!-- Prompts will appear here -->
+    </div>
+  </div>
+
+  <button class="add-prompt-btn" onclick="addNewPrompt()">
+    <i class="ph ph-plus-circle"></i>
+    Tambah Prompt Baru
+  </button>
+
+  <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-lg);">
+    <button class="btn-action secondary-btn" onclick="exportPrompts()" style="flex: 1;">
+      <i class="ph ph-export"></i>
+      Export
+    </button>
+    <button class="btn-action danger-btn" onclick="clearAllPrompts()" style="flex: 1;">
+      <i class="ph ph-trash"></i>
+      Hapus Semua
+    </button>
+  </div>
+
+  <button class="btn-action secondary-btn" onclick="closeAllSheets()">
+    <i class="ph ph-x"></i>
+    Tutup
+  </button>
+</div>
+
+  <!-- Info Modal -->
+  <div id="info-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header" style="position: sticky; top: 0; background: #f8f9f0">
+        <h2>🔒 Info &amp; Privasi</h2>
+        <button class="modal-close" onclick="closeInfoModal()">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-section">
+          <h3><i class="ph ph-shield-check"></i>Keamanan Data</h3>
+          <div class="privacy-highlight">
+            <p><strong>Perhatian Penting:</strong> Aplikasi ini berjalan
+              sepenuhnya di browser Anda.</p>
+            <p>Semua data disimpan secara lokal di perangkat Anda menggunakan:
+            </p>
+            <ul>
+              <li><strong>LocalStorage</strong>: API Key, prompt bank,
+                pengaturan</li>
+              <li><strong>SessionStorage</strong>: State percakapan saat ini
+              </li>
+            </ul>
+            <p><strong>Data TIDAK dikirim ke server kami.</strong> Koneksi hanya
+              terjadi ke <strong>Google Gemini API</strong>.</p>
+              <p><strong>AI CodOt di CodaWarm</strong> dioptimasi untuk arsitektur <strong>Gemini 2.5 & 3 Flash Preview</strong> demi kecepatan respons maksimal.</p>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h3><i class="ph ph-google-logo"></i>Tentang Gemini API</h3>
+          <p>Kami menggunakan Google's Gemini AI untuk memproses permintaan
+            Anda. Berikut yang perlu Anda ketahui:</p>
+          <ul>
+            <li>Input Anda dikirim ke server Google untuk diproses</li>
+            <li>Google mungkin menyimpan data sesuai <a
+                href="https://policies.google.com/privacy" target="_blank"
+                style="color: var(--accent);">kebijakan privasi mereka</a></li>
+            <li>API Key milik Anda hanya digunakan untuk autentikasi ke Gemini
+            </li>
+            <li>Kami tidak memiliki akses ke API Key atau percakapan Anda</li>
+          </ul>
+        </div>
+
+        <div class="modal-section">
+          <h3><i class="ph ph-lock"></i>Rekomendasi Keamanan</h3>
+          <div class="warning-box">
+            <p><strong>Untuk menjaga privasi Anda:</strong></p>
+            <ol>
+              <li>Gunakan API Key dengan quota terbatas</li>
+              <li>Jangan bagikan kode atau informasi sensitif</li>
+              <li>Hapus history browser secara berkala jika menggunakan
+                perangkat bersama</li>
+              <li>Reset sesi chat setelah selesai</li>
+              <li>Simpan API Key dengan aman</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h3><i class="ph ph-lightbulb"></i>Cara Penggunaan</h3>
+          <p><strong>Fitur Utama:</strong></p>
+          <ul>
+            <li><strong>💬 Chat AI</strong>: Tanyakan apa saja tentang
+              pemrograman</li>
+            <li><strong>📎 Lampirkan File</strong>: Unggah file kode untuk
+              dianalisis</li>
+            <li><strong>📌 Sematkan Chat</strong>: Simpan poin penting dengan
+              pin</li>
+            <li><strong>✨ Prompt Bank</strong>: Simpan prompt favorit untuk
+              digunakan kembali</li>
+            <li><strong>📝 Expanded Input</strong>: Untuk kode panjang atau
+              penjelasan detail</li>
+          </ul>
+
+          <p><strong>Shortcut:</strong></p>
+          <ul>
+            <li><code>Enter</code>: Kirim pesan</li>
+            <li><code>Ctrl/Cmd + Enter</code>: Kirim di expanded input</li>
+            <li><code>/</code>: Akses prompt bank dari input</li>
+            <li><code>Escape</code>: Tutup sheet/modal</li>
+            <li><code>**</code>: Teks tebal</li>
+            <li><code>* atau _</code>: Teks miring</li>
+            <li><code>-</code>: Poin-poin</li>
+          </ul>
+        </div>
+
+        <div class="modal-section">
+          <h3><i class="ph ph-question"></i>Pertanyaan Umum</h3>
+          <p><strong>Q: Data saya disimpan di mana?</strong><br>
+            A: Hanya di browser Anda. Clear cache = hilang data.</p>
+
+          <p><strong>Q: Bagaimana mendapatkan API Key?</strong><br>
+            A: Daftar di <a href="https://makersuite.google.com/app/apikey"
+              target="_blank" style="color: var(--accent);">Google AI
+              Studio</a>.</p>
+
+          <p><strong>Q: Apakah ada biaya?</strong><br>
+            A: Tergantung penggunaan Gemini API. Cek pricing Google.</p>
+        </div>
+
+        <div class="modal-section">
+          <h3><i class="ph ph-warning-circle"></i>Disclaimer</h3>
+          <p>Aplikasi ini adalah alat bantu coding. Output AI perlu diverifikasi
+            kebenarannya. Pengembang tidak bertanggung jawab atas kesalahan
+            dalam kode yang dihasilkan.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div id="downloadModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content glass">
+        <h3><i class="ph ph-file-arrow-down"></i> Simpan Sebagai File</h3>
+        <div class="modal-body">
+            <label>Nama File:</label>
+            <input type="text" id="fileNameInput" placeholder="nama_file_baru">
+            
+            <label>Ekstensi:</label>
+            <select id="fileExtInput">
+                <option value=".js">.js (JavaScript)</option>
+                <option value=".html">.html (HTML)</option>
+                <option value=".css">.css (CSS)</option>
+                <option value=".py">.py (Python)</option>
+                <option value=".json">.json (JSON)</option>
+                <option value=".php">.php (PHP)</option>
+                <option value=".txt">.txt (Text)</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeDownloadModal()" class="btn-secondary">Batal</button>
+            <button id="confirmDownloadBtn" class="btn-primary">Unduh Sekarang</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+  
+</body>
+</html>
