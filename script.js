@@ -832,6 +832,34 @@ function updatePreview(value) {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+  const lsScreen = document.getElementById('ls-screen');
+  const lsVideo = document.getElementById('ls-video');
+
+// Opsi A: Hilang Otomatis saat Video Selesai
+lsVideo.onended = function() {
+    hideLoader();
+};
+
+// Opsi B: Bisa dilewati (Skip) kalau diklik (User-Friendly)
+lsScreen.onclick = function() {
+    hideLoader();
+};
+
+function hideLoader() {
+    lsScreen.classList.add('loader-hidden');
+    
+    // Hapus elemen dari DOM setelah animasi fade selesai (untuk hemat RAM)
+    setTimeout(() => {
+        lsScreen.remove();
+    }, 800);
+}
+
+// Fallback: Jika video gagal load, tetap hilangkan ls screen setelah 5 detik
+setTimeout(() => {
+    if (document.getElementById('ls-screen')) {
+        hideLoader();
+    }
+}, 12000); 
   // Load config
   document.getElementById('apiKeyInput').value = apiKey;
 
