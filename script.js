@@ -316,70 +316,6 @@ function setupPromptSuggestions() {
   });
 }
 
-// ==================== FORMAT MESSAGE ====================
-function formatMessage(raw) {
-  const lines = raw.split('\n');
-  let formatted = '';
-  let inList = false;
-
-  lines.forEach(line => {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      formatted += '<br>';
-      return;
-    }
-
-    // Blockquote
-    if (trimmed.startsWith('>')) {
-      let content = trimmed.slice(1).trim();
-      // Bold/Italic di blockquote
-      content = content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-      content = content.replace(/\*(.*?)\*/g, '<i>$1</i>');
-      content = content.replace(/_(.*?)_/g, '<i>$1</i>');
-      formatted += `<blockquote>${content}</blockquote>`;
-      return;
-    }
-
-    // List items
-    const listMatch = trimmed.match(/^[-*]\s+(.*)/);
-    if (listMatch) {
-      if (!inList) {
-        formatted += '<ul>';
-        inList = true;
-      }
-      let content = listMatch[1].trim();
-      // Bold/Italic di list item
-      content = content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-      content = content.replace(/\*(.*?)\*/g, '<i>$1</i>');
-      content = content.replace(/_(.*?)_/g, '<i>$1</i>');
-      formatted += `<li>${content}</li>`;
-      return; // jangan tambah <br> di list
-    } else if (inList) {
-      formatted += '</ul>';
-      inList = false;
-    }
-
-    // Bold/Italic di normal line
-    let content = trimmed;
-    content = content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    content = content.replace(/\*(.*?)\*/g, '<i>$1</i>');
-    content = content.replace(/_(.*?)_/g, '<i>$1</i>');
-
-    // URL auto-link
-    content = content.replace(
-      /(https?:\/\/[^\s]+)/g,
-      '<a href="$1" target="_blank">$1</a>'
-    );
-
-    formatted += content + '<br>';
-  });
-
-  // Tutup list jika masih terbuka
-  if (inList) formatted += '</ul>';
-
-  return formatted;
-}
-
 // ==================== ADD BUBBLE ====================
 function addBubble(content, sender) {
     const container = document.getElementById('chat-container');
@@ -393,29 +329,54 @@ function addBubble(content, sender) {
     bubble.className = `bubble ${sender}`;
 
     if (sender === 'ai') {
-        bubble.innerHTML = marked.parse(content);
+        // 1. Render Markdown menjadi HTML kotor
+        const dirty = marked.parse(content);
+
+        // 1.1. SANITIZE (INI GERBANG KEAMANAN)
+        const clean = DOMPurify.sanitize(dirty, {
+              ALLOWED_TAGS: [
+                  'p','br','b','i','strong','em',
+                  'ul','ol','li',
+                  'blockquote',
+                  'pre','code',
+                  'table','thead','tbody','tr','th','td',
+                  'a','span','div'
+              ],
+              ALLOWED_ATTR: ['href','target','rel','class'],
+              FORBID_TAGS: ['img','video','audio','iframe','svg','style','script']
+        });
         
-        // Tunggu sampai DOM selesai dirender sebelum tambahkan event listeners
-        setTimeout(() => {
-            bubble.querySelectorAll('pre').forEach(pre => {
-                const btnContainer = document.createElement('div');
-                btnContainer.className = 'code-actions-container';
+        // 2. Gunakan DOMParser untuk memanipulasi elemen secara 'off-screen'
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(clean, 'text/html');
 
-                // Tombol Copy
-                const copyBtn = document.createElement('button');
-                copyBtn.innerHTML = '<i class="ph ph-copy"></i>';
-                copyBtn.onclick = () => copyText(pre.innerText, copyBtn);
+        // 3. Cari semua elemen <pre> dan pasang tombol SECARA INSTAN
+        doc.querySelectorAll('pre').forEach(pre => {
+            // Berikan posisi relatif agar tombol bisa diposisikan absolute di dalamnya
+            pre.style.position = 'relative';
 
-                // Tombol Download
-                const dlBtn = document.createElement('button');
-                dlBtn.innerHTML = '<i class="ph ph-download-simple"></i>';
-                dlBtn.onclick = () => openDownloadModal(pre.innerText);
+            const btnContainer = document.createElement('div');
+            btnContainer.className = 'code-actions-container';
 
-                btnContainer.appendChild(copyBtn);
-                btnContainer.appendChild(dlBtn);
-                pre.appendChild(btnContainer);
-            });
-        }, 100);
+            // Tombol Copy
+            const copyBtn = document.createElement('button');
+            copyBtn.innerHTML = '<i class="ph ph-copy"></i>';
+            copyBtn.title = "Salin Kode";
+            copyBtn.onclick = () => copyText(pre.innerText, copyBtn);
+
+            // Tombol Download
+            const dlBtn = document.createElement('button');
+            dlBtn.innerHTML = '<i class="ph ph-download-simple"></i>';
+            dlBtn.title = "Unduh File";
+            dlBtn.onclick = () => openDownloadModal(pre.innerText);
+
+            btnContainer.appendChild(copyBtn);
+            btnContainer.appendChild(dlBtn);
+            pre.appendChild(btnContainer);
+        });
+
+        // 4. Masukkan HTML yang sudah dimodifikasi ke dalam bubble
+        bubble.innerHTML = doc.body.innerHTML;
     } else {
         bubble.textContent = content;
     }
@@ -653,23 +614,55 @@ function clearFile() {
 }
 
 // ===== MESSAGE HANDLING =====
+function showTypingIndicator() {
+    const container = document.getElementById('chat-container');
+    const indicatorId = 'typing-indicator';
+    
+    // Hapus jika sudah ada (mencegah duplikasi)
+    const existing = document.getElementById(indicatorId);
+    if (existing) existing.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'bubble-wrapper ai-wrapper typing-wrapper';
+    wrapper.id = indicatorId;
+
+    wrapper.innerHTML = `
+        <div class="bubble ai typing-dot-container">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+        </div>
+    `;
+
+    container.appendChild(wrapper);
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    return indicatorId;
+}
+
 async function sendMessage() {
     const input = document.getElementById('userInput');
     const roleSelect = document.getElementById('roleSelect');
     const msg = input.value.trim();
     const selectedRole = roleSelect.value;
     
+    // 1. Validasi Input & API Key
     if ((!msg && !attachedFile) || !apiKey) {
         if (!apiKey) showToast("API Key belum diatur!", "error");
         return;
     }
 
+    // 2. Tampilkan pesan user & bersihkan input
     addBubble(msg + (attachedFile ? `\n\n[File: ${attachedFile.name}]` : ""), 'user');
     input.value = '';
+    
+    // 3. Tampilkan indikator typing (titik-titik animasi)
+    const typingId = showTypingIndicator();
+
+    // 4. Atur UI tombol loading
     document.getElementById('loader').style.display = 'block';
     document.getElementById('sendBtn').style.display = 'none';
 
-    // ===== SYSTEM PROMPT DENGAN FORMAT JSON SUMMARY =====
+    // 5. Siapkan Instruksi Sistem
     const systemInstruction = `
         IDENTITY: You are CodOt (Code Copilot).
         ROLE: ${selectedRole}.
@@ -693,9 +686,7 @@ async function sendMessage() {
         CURRENT CONTEXT FROM PREVIOUS MESSAGE: ${sessionState}
     `;
 
-    let parts = [{
-        text: `${systemInstruction}\n\nUSER_QUERY: ${msg}`
-    }];
+    let parts = [{ text: `${systemInstruction}\n\nUSER_QUERY: ${msg}` }];
 
     if (attachedFile) {
         parts.push({
@@ -706,6 +697,7 @@ async function sendMessage() {
         });
     }
 
+    // 6. Loop Inventory Model
     const modelInventory = ['gemini-3-flash-preview', 'gemini-3-pro-preview', 'gemini-2.5-flash', 'gemini-2.5-pro'];
     let success = false;
 
@@ -724,39 +716,49 @@ async function sendMessage() {
             const data = await response.json();
 
             if (response.ok) {
+                // Hapus indikator typing karena AI sudah menjawab
+                const indicator = document.getElementById(typingId);
+                if (indicator) indicator.remove();
+                
                 const raw = data.candidates[0].content.parts[0].text;
                 
-                // Ambil isi di dalam UI_RESPONSE
-                const uiMatch = raw.match(/<UI_RESPONSE>([\s\S]*?)<\/UI_RESPONSE>/);
-                const stateMatch = raw.match(/<STATE_SUMMARY>([\s\S]*?)<\/STATE_SUMMARY>/);
+                // Parsing Jawaban & State
+                const uiMatch = raw.match(/<UI_RESPONSE>([\s\S]*?)<\/UI_RESPONSE>/i);
+                const stateMatch = raw.match(/<STATE_SUMMARY>([\s\S]*?)<\/STATE_SUMMARY>/i);
                 
                 let ui = "";
                 if (uiMatch) {
                     ui = uiMatch[1].trim();
                 } else {
-                    // FALLBACK: Jika AI lupa kasih tag, kita bersihkan cuma tag CodOt saja, 
-                    // JANGAN hapus tag HTML standar agar kode program tidak hilang.
-                    ui = raw.replace(/<\/?UI_RESPONSE>|<\/?STATE_SUMMARY>/g, '').trim();
+                    ui = raw.replace(/<\/?UI_RESPONSE>|<\/?STATE_SUMMARY>/gi, '').trim();
                 }
                 
-                // Simpan State (JSON)
                 if (stateMatch) {
                     sessionState = stateMatch[1].trim();
                     localStorage.setItem('gemini_state', sessionState);
                 }
                 
+                // Tampilkan ke Chat
                 addBubble(ui, 'ai');
                 clearFile();
                 success = true;
-                break; 
+                break; // Keluar dari loop model jika berhasil
             }
         } catch (err) { 
-            console.error(err); 
+            console.error(`Gagal menggunakan model ${modelId}:`, err);
+            showToast(`Model ${modelId} gagal, mencoba model cadangan...`, "info");
+            // Lanjut mencoba model berikutnya di dalam inventory
         }
     }
 
-    if (!success) addBubble(`❌ **CodOt Error:** Gagal memproses permintaan.`, 'ai');
+    // 7. Penanganan jika semua model gagal
+    if (!success) {
+        const indicator = document.getElementById(typingId);
+        if (indicator) indicator.remove(); // Hapus indikator jika gagal total
+        addBubble(`❌ **CodOt Error:** Gagal memproses permintaan setelah mencoba beberapa model.`, 'ai');
+    }
 
+    // 8. Kembalikan UI Tombol
     document.getElementById('loader').style.display = 'none';
     document.getElementById('sendBtn').style.display = 'flex';
 }
@@ -822,7 +824,18 @@ function updatePreview(value) {
         
         if (value.includes('```')) {
             helperCont.style.display = 'block';
-            previewBox.innerHTML = marked.parse(value);
+            previewBox.innerHTML = DOMPurify.sanitize(marked.parse(value), {
+              ALLOWED_TAGS: [
+                'p','br','b','i','strong','em',
+                'ul','ol','li',
+                'blockquote',
+                'pre','code',
+                'table','thead','tbody','tr','th','td',
+                'a','span','div'
+              ],
+              ALLOWED_ATTR: ['href','target','rel','class'],
+              FORBID_TAGS: ['img','video','audio','iframe','svg','style','script']
+            });
             if (window.Prism) Prism.highlightAllUnder(previewBox);
         } else {
             helperCont.style.display = 'none';
@@ -832,6 +845,58 @@ function updatePreview(value) {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+
+DOMPurify.addHook('afterSanitizeAttributes', function (node) {
+  if (node.tagName === 'A') {
+    node.setAttribute('rel', 'noopener noreferrer');
+    node.setAttribute('target', '_blank');
+  }
+});
+  
+marked.setOptions({
+    // Aktifkan line break otomatis (seperti di WhatsApp/Telegram)
+    breaks: true,
+    
+    // Gfm (GitHub Flavored Markdown) untuk tabel dan strikethrough yang lebih baik
+    gfm: true,
+
+    // Konfigurasi Renderer Kustom
+    renderer: new marked.Renderer(),
+
+    // Integrasi Syntax Highlighting (menggunakan Prism.js dari script Anda)
+highlight: function(code, lang) {
+    if (window.Prism && lang) {
+        // Normalisasi nama bahasa (contoh: js -> javascript)
+        const language = lang.toLowerCase() === 'js' ? 'javascript' : lang.toLowerCase();
+        try {
+            return Prism.highlight(code, Prism.languages[language] || Prism.languages.markup, language);
+        } catch (e) {
+            return code;
+        }
+    }
+    return code;
+}
+
+});
+
+// Tambahkan kustomisasi link agar selalu buka di tab baru
+const renderer = {
+    link(href, title, text) {
+        return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    },
+    // Mempercantik tampilan tabel agar responsive
+    table(header, body) {
+        return `<div class="table-container">
+                    <table>
+                        <thead>${header}</thead>
+                        <tbody>${body}</tbody>
+                    </table>
+                </div>`;
+    }
+};
+
+marked.use({ renderer });
+
   const lsScreen = document.getElementById('ls-screen');
   const lsVideo = document.getElementById('ls-video');
 
