@@ -388,7 +388,6 @@ header {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all var(--transition-fast);
-    white-space: pre-line;
 }
 .bubble.user {
     background: var(--gradient-primary);
@@ -407,19 +406,6 @@ header {
 }
 .bubble.ai:hover {
     border-color: var(--border-medium);
-}
-.bubble ul {
-    padding-left: 30px;
-    margin: 4px 0;
-}
-.bubble li {
-    margin: 1px 0;
-}
-.bubble blockquote {
-    border-left: 3px solid #ccc;
-    padding-left: 10px;
-    color: #555;
-    margin: 4px 0;
 }
 
 /* Bubble Actions */
@@ -1331,7 +1317,7 @@ textarea#expandedInput:focus {
 
 /* ===== BUBBLE LINE HEIGHT FIX ===== */
 .bubble {
-    line-height: 1 !important; /* Force line height */
+    line-height: 1.25 !important; /* Force line height */
 }
 
 /* Reset line height untuk semua elemen dalam bubble */
@@ -1351,7 +1337,7 @@ textarea#expandedInput:focus {
 }
 
 .bubble.ai p {
-    line-height: 1.2;
+    line-height: 1.4;
     margin: 0.2em 0;
 }
 
@@ -1414,4 +1400,102 @@ textarea#expandedInput:focus {
 .loader-hidden {
     opacity: 0;
     visibility: hidden;
+}
+
+/* Container untuk titik typing */
+.typing-dot-container {
+    display: flex;
+    gap: 4px;
+    padding: 10px 15px;
+    align-items: center;
+    width: fit-content;
+}
+
+/* Animasi titik */
+.typing-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    opacity: 0.4;
+    animation: typingAnimation 1.4s infinite dashed;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingAnimation {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+}
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin: 10px 0;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    text-align: left;
+}
+
+th {
+    background: var(--surface-secondary);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+pre {
+    position: relative; /* Wajib ada untuk tombol absolute */
+    padding: 1.5rem 1rem 1rem 1rem !important;
+}
+
+.code-actions-container {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+.code-actions-container button {
+    background: var(--surface-tertiary);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.code-actions-container button:hover {
+    background: var(--accent-primary);
+    color: white;
+}
+
+/* Tambahkan ini untuk keamanan UI */
+.bubble.ai {
+    max-width: 100%; /* Memastikan bubble AI bisa melebar jika ada tabel */
+}
+
+@media (max-width: 480px) {
+    .bubble.ai {
+        width: 100%; /* Full width di mobile agar tabel punya ruang */
+    }
 }
