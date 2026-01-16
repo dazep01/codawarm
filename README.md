@@ -2,11 +2,13 @@
 
 ![CodaWarm Cover](assets/img/og-image.png)
 
-**CodaWarm (CodOt)** adalah asisten pemrograman berbasis AI yang dirancang untuk mempercepat proses coding tanpa mengorbankan kendali kreatif developer. Aplikasi ini ditenagai oleh **Gemini 3 Flash API**, dengan fokus pada kecepatan eksekusi, efisiensi konteks, dan privasi pengguna.
+**CodaWarm (CodOt)** adalah sebuah eksperimen kecil berupa asisten pemrograman berbasis AI sederhana. Aplikasi ini ditenagai oleh **Gemini 3 Flash API** dan dirancang untuk membantu mempercepat proses coding harian tanpa fitur yang berlebihan.
 
-Proyek ini dibangun dengan prinsip yang tegas: **AI adalah alat, bukan pengambil keputusan**. Seluruh ide, arsitektur sistem, alur fitur, dan arah pengembangan berasal dari kendali penuh manusia. AI digunakan secara strategis sebagai akselerator—mulai dari eksplorasi solusi teknis, asistensi debugging, hingga validasi logika—namun keputusan akhir tetap berada di tangan pengembang.
+​Proyek ini berawal dari **niat dan ide iseng** saat mengisi waktu luang. Bagi saya, membangun CodaWarm bukan sekadar membuat aplikasi, melainkan salah satu **proses belajar dan sarana untuk memahami lebih dalam** tentang logika coding, integrasi API, serta manajemen state. Ini adalah laboratorium kecil tempat saya bereksperimen dengan kesalahan dan penemuan baru.
 
-CodaWarm berjalan **sepenuhnya di sisi klien (client-side)**. Tidak ada server perantara, tidak ada penyimpanan tersembunyi. API Key dan data pengguna sepenuhnya berada di bawah kontrol pemiliknya.
+​Meskipun sederhana, proyek ini dibangun dengan prinsip: **AI adalah alat, bukan pengambil keputusan**. Seluruh ide, arsitektur, dan alur fitur tetap berada di kendali manusia. AI hanya digunakan sebagai akselerator strategis untuk eksplorasi solusi teknis dan bantuan debugging ringan.
+
+​**CodaWarm** berjalan **sepenuhnya di sisi klien (client-side)**. Karena ini adalah alat yang sangat mendasar, tidak ada server perantara yang rumit. API Key dan data Anda tetap berada di bawah kontrol penuh Anda di dalam browser.
 
 ---
 
@@ -15,8 +17,8 @@ CodaWarm berjalan **sepenuhnya di sisi klien (client-side)**. Tidak ada server p
 - **⚡ Gemini 3 Flash Integration**  
   Respon cepat untuk debugging, pembuatan fungsi, dan penjelasan logika kode secara kontekstual.
 
-- **🧠 Intelligent State Management**  
-  Menggunakan *state summarization* berbasis JSON untuk menjaga konteks percakapan tetap presisi tanpa pemborosan token.
+- **🧠 **State Management Minimalis**
+  Menggunakan skema state _summarization_ berbasis JSON sederhana untuk menjaga konteks percakapan agar tetap efisien.
 
 - **🛡️ Privacy First**  
   API Key dan riwayat percakapan disimpan di `localStorage`. Tidak ada data yang dikirim ke pihak ketiga selain ke Google Gemini API.
@@ -24,8 +26,8 @@ CodaWarm berjalan **sepenuhnya di sisi klien (client-side)**. Tidak ada server p
 - **📂 Artifact Downloads**  
   Potongan kode dapat diunduh langsung sebagai file fisik dengan ekstensi yang sesuai, hanya dengan satu klik.
 
-- **🎨 Premium UI/UX**  
-  Antarmuka modern berbasis *Glassmorphism*, dilengkapi **Loading Motion Screen** berdurasi 11 detik sebagai pembuka yang elegan.
+- **🎨 **UI Ala Kadarnya**
+  Menggunakan tema _Glassmorphism_ yang bersih dengan _Loading Motion Screen_ berdurasi 11 detik—_sekadar pemanis untuk menyapa pengguna_.
 
 - **📱 PWA Ready**  
   Mendukung instalasi di Android dan iOS melalui *Add to Home Screen*, lengkap dengan manifest dan meta tag mobile.
@@ -63,7 +65,7 @@ git clone https://github.com/dazep01/codawarm.git
 
 Masuk ke direktori proyek:
 ```bash
-cd codawarm-codot
+cd codawarm
 ```
 
 Jalankan aplikasi:  
@@ -105,12 +107,12 @@ Jika memiliki ide untuk peningkatan *state management*, performa AI, atau UI/UX:
 
 ## 📄 Lisensi
 
-Proyek ini menggunakan **MIT License**.  
+Proyek ini menggunakan **MIT License**.
 Lihat file `LICENSE` untuk detail lengkap.
 
 ---
 
 **CodaWarm — Powered by Gemini AI**  
-Built with intention, precision, and respect for human creativity.
+_Just a small tool born out of curiosity._
 
 _"Ketika ide manusia yang solid dipadukan dengan kecepatan eksekusi AI, hasilnya bukan sekadar cepat—tapi terarah."_
